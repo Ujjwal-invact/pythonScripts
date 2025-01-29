@@ -4,7 +4,7 @@ import os
 # Input & output file paths
 input_file = "./final_merged_data.csv"  # Change if needed
 output_file = "./cleaned_data.csv"
-split_output_folder = "./new_split_csv_files"
+split_output_folder = "./New_new_split_csv_files"
 split_required = True  # Change to True only if splitting is needed
 
 # Required column names
@@ -75,7 +75,7 @@ for chunk in pd.read_csv(input_file, chunksize=chunksize, dtype=str, low_memory=
 
     # Convert all date columns to YYYY-MM-DD format
     for col in chunk.columns:
-        if any(keyword in col.lower() for keyword in [ "date_of_birth", "date_of_application"]):
+        if any(keyword in col.lower() for keyword in ["date_of_birth", "date_of_application"]):
             chunk[col] = pd.to_datetime(chunk[col], errors="coerce").dt.strftime("%Y-%m-%d")
             chunk[col] = chunk[col].fillna("")  # Keep missing dates blank
 
@@ -113,33 +113,18 @@ for col in year_columns:
 df_cleaned.to_csv(output_file, index=False)
 print(f"\nCleaned data saved to {output_file}")
 
-# Optional: Split CSV into parts <90MB if required
+# Optional: Split CSV into parts with 30,000 rows each
 if split_required:
     os.makedirs(split_output_folder, exist_ok=True)
-max_file_size_mb = 90
-max_file_size_bytes = max_file_size_mb * 1024 * 1024
-chunk_size = 100000
 
-file_count = 1
-current_chunk = pd.DataFrame(columns=df_cleaned.columns)  # Ensure column structure
+    row_limit = 30000  # Set row limit per file
+    file_count = 1
+    current_chunk = pd.DataFrame(columns=df_cleaned.columns)  # Ensure column structure
 
-for _, row in df_cleaned.iterrows():
-    current_chunk = pd.concat([current_chunk, row.to_frame().T], ignore_index=True)
-    output_file = os.path.join(split_output_folder, f"split_part_{file_count}.csv")
-    
-    # Save the file
-    current_chunk.to_csv(output_file, index=False)
-
-    if os.path.getsize(output_file) >= max_file_size_bytes:
-        print(f"Saved {output_file} ({os.path.getsize(output_file) / (1024*1024):.2f} MB)")
-        file_count += 1
-        current_chunk = pd.DataFrame(columns=df_cleaned.columns)  # Reset the DataFrame
-
-    # Save the last chunk if it has data
-    if not current_chunk.empty:
+    for chunk in range(0, len(df_cleaned), row_limit):
         output_file = os.path.join(split_output_folder, f"split_part_{file_count}.csv")
-        current_chunk.to_csv(output_file, index=False)
-        print(f"Saved {output_file} ({os.path.getsize(output_file) / (1024*1024):.2f} MB)")
-
+        df_cleaned.iloc[chunk:chunk + row_limit].to_csv(output_file, index=False)
+        print(f"Saved {output_file} with {row_limit} rows")
+        file_count += 1
 
 print("CSV splitting complete!")
