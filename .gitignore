@@ -1,0 +1,8 @@
+venv
+*.csv
+outputs
+files
+All Output data
+new_split_csv_files
+split_csv_files
+.DS_Store
