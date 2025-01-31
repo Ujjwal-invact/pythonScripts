@@ -1,0 +1,169 @@
+# import os
+# import pandas as pd
+
+# # 📂 Folder containing Excel and CSV files to merge
+# INPUT_FOLDER = "./files/old_old_csv"  # Change this to your folder path
+
+# # 📌 Output file path (CSV format)
+# OUTPUT_FILE = "./New_merge_1.csv"
+
+# # 🚀 Function to merge Excel and CSV files and save as a single CSV
+# def merge_files_to_csv():
+#     """Merges all Excel (.xlsx) and CSV files from INPUT_FOLDER into a single CSV file."""
+    
+#     # Ensure the input folder exists
+#     if not os.path.exists(INPUT_FOLDER):
+#         print(f"❌ Error: Folder '{INPUT_FOLDER}' not found.")
+#         return
+
+#     # List all potential data files
+#     files = [f for f in os.listdir(INPUT_FOLDER) if f.endswith((".xlsx", ".csv"))]
+
+#     if not files:
+#         print("❌ No Excel (.xlsx) or CSV files found in the folder.")
+#         return
+
+#     print(f"🔍 Found {len(files)} files. Merging...")
+
+#     # Initialize an empty list to store dataframes
+#     dataframes = []
+
+#     for file in files:
+#         file_path = os.path.join(INPUT_FOLDER, file)
+#         print(f"📂 Reading file: {file}")
+
+#         try:
+#             if file.endswith(".xlsx"):
+#                 # Check if it's a valid Excel file
+#                 if not file_path.lower().endswith(".xlsx"):
+#                     print(f"⚠️ Skipping non-Excel file: {file}")
+#                     continue
+
+#                 df = pd.read_excel(file_path, dtype=str, engine="openpyxl")  # Use openpyxl for .xlsx
+
+#             elif file.endswith(".csv"):
+#                 df = pd.read_csv(file_path, dtype=str)
+
+#             dataframes.append(df)
+
+#         except Exception as e:
+#             print(f"❌ Error reading {file}: {e}")
+#             continue  # Skip problematic files
+
+#     # Merge all dataframes if any were read successfully
+#     if dataframes:
+#         merged_df = pd.concat(dataframes, ignore_index=True)
+
+#         # Remove duplicate rows based on all columns (optional)
+#         merged_df.drop_duplicates(inplace=True)
+
+#         # Save merged file as CSV
+#         merged_df.to_csv(OUTPUT_FILE, index=False)
+
+#         print(f"✅ Merged {len(dataframes)} files successfully! Output saved to: {OUTPUT_FILE}")
+#     else:
+#         print("❌ No valid data files were merged.")
+
+# # Run the merge function
+# merge_files_to_csv()
+
+# import pandas as pd
+
+# # 📌 Path to the CSV file
+# FILE_PATH = "./outputs/new_merged_files_without_duplicates.csv"  # Change this to your CSV file path
+
+# def count_rows_and_duplicates(file_path):
+#     """Counts the number of non-empty rows and duplicate rows in a CSV file."""
+#     try:
+#         # Read CSV file
+#         df = pd.read_csv(file_path)
+
+#         # Count non-empty rows (ignoring completely empty rows)
+#         non_empty_rows = df.dropna(how='all').shape[0]
+
+#         # Count duplicate rows (excluding the first occurrence)
+#         duplicate_rows = df.duplicated().sum()
+
+#         print(f"✅ The file '{file_path}' contains:")
+#         print(f"   - {non_empty_rows} rows with data")
+#         print(f"   - {duplicate_rows} duplicate rows")
+
+#     except Exception as e:
+#         print(f"❌ Error reading file: {e}")
+
+
+
+
+
+# # Run the function
+# count_rows_and_duplicates(FILE_PATH)
+
+
+# import pandas as pd
+
+# # Input file path
+# input_file = "./outputs/old_merged_files_with_duplicates.csv"  # Change as needed
+
+# # Read the CSV file
+# df = pd.read_csv(input_file, dtype=str, low_memory=False)
+
+# # Check if 'email_id' column exists
+# if "email_id" in df.columns:
+#     # Count duplicate occurrences
+#     duplicate_counts = df["email_id"].value_counts()
+    
+#     # Filter only emails that appear more than once
+#     duplicate_emails = duplicate_counts[duplicate_counts > 1]
+    
+#     # Print summary
+#     print(f"Total duplicate emails: {duplicate_emails.count()}")
+#     print("\nList of duplicate emails with counts:")
+#     print(duplicate_emails)
+
+#     # Save duplicate emails to a CSV file
+#     duplicate_emails.to_csv("duplicate_emails_count.csv", header=["count"])
+#     print("\nDuplicate emails saved to 'duplicate_emails_count.csv'")
+
+# else:
+#     print("Column 'email_id' not found in the dataset.")
+
+
+
+import pandas as pd
+
+# Input file path
+input_file = "./outputs/old_merged_files_with_duplicates.csv"  # Change as needed
+
+# Read the CSV file
+df = pd.read_csv(input_file, dtype=str, low_memory=False)
+
+# Count total number of rows
+total_rows = len(df)
+print(f"Total number of rows: {total_rows}")
+
+# Count exact duplicate rows
+exact_duplicate_rows = df.duplicated().sum()
+print(f"Total number of exact duplicate rows: {exact_duplicate_rows}")
+
+# Check if 'email_id' column exists
+if "email_id" in df.columns:
+    # Count duplicate occurrences in the email_id column
+    duplicate_counts = df["email_id"].value_counts()
+    
+    # Filter only emails that appear more than once
+    duplicate_emails = duplicate_counts[duplicate_counts > 1]
+    
+    # Count total duplicate emails
+    total_duplicate_emails = duplicate_emails.count()
+    print(f"Total duplicate emails: {total_duplicate_emails}")
+
+    # Print list of duplicate emails with counts
+    print("\nList of duplicate emails with counts:")
+    print(duplicate_emails)
+
+    # Save duplicate emails to a CSV file
+    duplicate_emails.to_csv("duplicate_emails_count.csv", header=["count"])
+    print("\nDuplicate emails saved to 'duplicate_emails_count.csv'")
+
+else:
+    print("Column 'email_id' not found in the dataset.")

@@ -1,13 +1,14 @@
 import pandas as pd
 import os
+import re
 
 # Input & output file paths
-input_file = "./final_merged_data.csv"  # Change if needed
-output_file = "./countfile.csv"
+input_file = "./New_merge_1.csv"  # Change if needed
+output_file = "./outputs/old_merged_files_with_duplicates.csv"
 split_output_folder = "./new_split_csv_files"
-split_required = False  # Change to False if splitting is not needed
+split_required = False  # Change to True if you want to split the final output
 
-# Required column names
+# Required column names mapping
 required_columns = {
     "Job Title": "job_title",
     "Date of application": "date_of_application",
@@ -61,6 +62,17 @@ def split_expand(df, column):
     df = df.explode(column)
     return df
 
+# Function to check if an email is valid (strict validation using regex)
+def is_valid_email(email):
+    """Check if an email is valid using regex"""
+    if not isinstance(email, str):
+        return False  # Non-string values are not valid emails
+    
+    # Regular expression for stricter email validation (only valid domains allowed)
+    email_regex = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|net|org|edu|gov|mil|biz|info|co|in|us|uk|ca|au|de|fr|jp|ru|cn|br|za|es|it|nl|mx|eu)$"
+    
+    return bool(re.match(email_regex, email))
+
 # Read CSV in chunks to handle large files efficiently
 chunksize = 100000
 processed_chunks = []
@@ -75,7 +87,11 @@ for chunk in pd.read_csv(input_file, chunksize=chunksize, dtype=str, low_memory=
 
     # Trim whitespace from email column before processing
     if "Email ID" in chunk.columns:
-        chunk["Email ID"] = chunk["Email ID"].str.strip()
+        chunk["Email ID"] = chunk["Email ID"].astype(str).str.strip()
+
+        # Remove rows where Email ID is missing or invalid
+        chunk = chunk.dropna(subset=["Email ID"])  # Remove NaN emails
+        chunk = chunk[chunk["Email ID"].apply(is_valid_email)]  # Keep only valid emails
 
     # Keep only last 10 digits of phone numbers
     if "Phone Number" in chunk.columns:
@@ -87,23 +103,17 @@ for chunk in pd.read_csv(input_file, chunksize=chunksize, dtype=str, low_memory=
             chunk[col] = pd.to_datetime(chunk[col], errors="coerce").dt.strftime("%Y-%m-%d")
             chunk[col] = chunk[col].fillna("")  # Keep missing dates blank
 
-    # Remove rows where Email ID is missing
-    if "Email ID" in chunk.columns:
-        chunk = chunk.dropna(subset=["Email ID"])  # Drop rows with NaN emails
-        chunk = chunk[chunk["Email ID"] != ""]  # Drop rows with empty email strings
-        chunk = chunk[chunk["Email ID"] != "nan"]  # Drop rows with empty email strings
-
     processed_chunks.append(chunk)
 
 # Combine all processed chunks
 df_cleaned = pd.concat(processed_chunks, ignore_index=True)
 
-# Remove duplicate emails **AFTER processing**
-if "Email ID" in df_cleaned.columns:
-    initial_count = len(df_cleaned)
-    df_cleaned = df_cleaned.drop_duplicates(subset=["Email ID"], keep="first")
-    removed_count = initial_count - len(df_cleaned)
-    print(f"\nTotal duplicate emails removed: {removed_count}")
+# # Remove duplicate emails **AFTER processing**
+# if "Email ID" in df_cleaned.columns:
+#     initial_count = len(df_cleaned)
+#     df_cleaned = df_cleaned.drop_duplicates(subset=["Email ID"], keep="first")
+#     removed_count = initial_count - len(df_cleaned)
+#     print(f"\nTotal duplicate emails removed: {removed_count}")
 
 # Rename columns
 df_cleaned.rename(columns=required_columns, inplace=True)
@@ -132,17 +142,17 @@ if extra_columns:
 df_cleaned.to_csv(output_file, index=False)
 print(f"\nCleaned data saved to {output_file}")
 
-# # Optional: Split CSV into parts with 30,000 rows each
-# if split_required:
-#     os.makedirs(split_output_folder, exist_ok=True)
+# Optional: Split CSV into parts with 30,000 rows each
+if split_required:
+    os.makedirs(split_output_folder, exist_ok=True)
 
-#     row_limit = 30000  # Set row limit per file
-#     file_count = 1
+    row_limit = 30000  # Set row limit per file
+    file_count = 1
 
-#     for chunk in range(0, len(df_cleaned), row_limit):
-#         output_file = os.path.join(split_output_folder, f"split_part_{file_count}.csv")
-#         df_cleaned.iloc[chunk:chunk + row_limit].to_csv(output_file, index=False)
-#         print(f"Saved {output_file} with {row_limit} rows")
-#         file_count += 1
+    for chunk in range(0, len(df_cleaned), row_limit):
+        output_file = os.path.join(split_output_folder, f"split_part_{file_count}.csv")
+        df_cleaned.iloc[chunk:chunk + row_limit].to_csv(output_file, index=False)
+        print(f"Saved {output_file} with {row_limit} rows")
+        file_count += 1
 
-print("CSV splitting complete!")
+print("CSV cleaning and processing complete! 🚀")
