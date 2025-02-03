@@ -3,8 +3,8 @@ import os
 import re
 
 # Input & output file paths
-input_file = "./New_merge_1.csv"  # Change if needed
-output_file = "./outputs/old_merged_files_with_duplicates.csv"
+input_file = "./merged_output_2.csv"  # Change if needed
+output_file = "./outputs/processed_merged_output_2.csv"
 split_output_folder = "./new_split_csv_files"
 split_required = False  # Change to True if you want to split the final output
 
